@@ -1,284 +1,266 @@
-import java.awt.*; // Importa classes para interface gráfica e manipulação de imagens
-import java.awt.event.*; // Importa classes para eventos de interface gráfica
-import java.awt.image.BufferedImage; // Para manipulação de imagens em buffer
-import java.io.File; // Para manipulação de arquivos
-import javax.imageio.ImageIO; // Para ler imagens de arquivos
-import javax.swing.*; // Importa componentes gráficos Swing
+import java.awt.*;
+import java.awt.event.*;
+import java.awt.image.BufferedImage;
+import java.io.File;
+import javax.imageio.ImageIO;
+import javax.swing.*;
 
-// Classe principal da aplicação, herda de JFrame (janela)
-public class ProjetoPI extends JFrame {
-
-    private JButton iniciarButton; // Botão de iniciar
-    public static Cursor customCursor; // Cursor personalizado
-    private boolean iniciarButtonVisible = true; // Controle de visibilidade do botão
-
-    // Construtor da janela principal
-    public ProjetoPI() {
-        setTitle("Bem-vindo!"); // Define o título da janela
-        setDefaultCloseOperation(EXIT_ON_CLOSE); // Fecha o app ao fechar a janela
-        setSize(1800, 735); // Define o tamanho da janela
-        setLocationRelativeTo(null); // Centraliza a janela na tela
-        setResizable(false); // Impede redimensionamento da janela
-
-        setCursor(customCursor); // Define o cursor personalizado
-
-        // Caminho da imagem de fundo
-        String imagePath = "imagens/imagenspi/imagem de entrada.jpg";
-        File imageFile = new File(imagePath); // Cria objeto de arquivo
-        ImageIcon icon = imageFile.exists() ? new ImageIcon(imagePath) : null; // Carrega imagem se existir
-        Image backgroundImage = (icon != null) ? icon.getImage() : null; // Obtém a imagem
-
-        // Painel de fundo com a imagem
-        BackgroundPanel panel = new BackgroundPanel(backgroundImage);
-        panel.setLayout(null); // Layout absoluto (permite usar setBounds)
-
-        // Criação do botão Iniciar
-        iniciarButton = new JButton("Iniciar");
-        try {
-            // Tenta carregar fonte personalizada
-            Font nexaFont = Font.createFont(Font.TRUETYPE_FONT, new File("fonts/NexaRustSlab-Black.otf")).deriveFont(18f);
-            iniciarButton.setFont(nexaFont);
-        } catch (Exception e) {
-            // Se não conseguir, usa fonte padrão
-            System.err.println("Erro ao carregar a fonte: " + e.getMessage());
-            iniciarButton.setFont(new Font("Trebuchet MS", Font.BOLD, 18));
+// Utilitários comuns para todas as telas
+class UIUtils {
+    // Carrega uma imagem de arquivo
+    public static Image loadImage(String path) {
+        File imageFile = new File(path);
+        if (imageFile.exists()) {
+            return new ImageIcon(path).getImage();
         }
-        iniciarButton.setBackground(new Color(0x5aa0dc)); // Cor de fundo do botão
-        iniciarButton.setForeground(Color.WHITE); // Cor do texto do botão
-        iniciarButton.addActionListener(e -> abrirTelaLogin()); // Ação ao clicar: abre tela de login
-        // Torna o botão invisível mas funcional
-        iniciarButton.setOpaque(false); // Não pinta o fundo
-        iniciarButton.setContentAreaFilled(false); // Não preenche área de conteúdo
-        iniciarButton.setBorderPainted(false); // Não desenha borda
-        iniciarButton.setText(""); // Remove texto
-        iniciarButton.setEnabled(true); // Continua funcional
-        iniciarButton.setBounds(400, 445, 570, 70); // Define posição e tamanho do botão
-        iniciarButton.setVisible(true); // Mantém o componente no painel
-
-        panel.add(iniciarButton); // Adiciona o botão ao painel
-        add(panel); // Adiciona o painel à janela
+        return null;
     }
 
-    // Abre a tela de login
+    // Cria um botão invisível (apenas área clicável)
+    public static JButton createInvisibleButton(Rectangle bounds, ActionListener listener) {
+        JButton button = new JButton();
+        button.setOpaque(false);
+        button.setContentAreaFilled(false);
+        button.setBorderPainted(false);
+        button.setBounds(bounds);
+        if (listener != null) button.addActionListener(listener);
+        return button;
+    }
+
+    // Cria um botão estilizado para opções
+    public static JButton createOptionButton(String text, Rectangle bounds, ActionListener listener) {
+        JButton button = new JButton(text);
+        button.setBounds(bounds);
+        button.setOpaque(true);
+        button.setContentAreaFilled(true);
+        button.setBorderPainted(true);
+        button.setBackground(new Color(0, 0, 0, 100));
+        button.setForeground(Color.WHITE);
+        button.setFont(new Font("Trebuchet MS", Font.BOLD, 16));
+        if (listener != null) button.addActionListener(listener);
+        return button;
+    }
+}
+
+// Painel de fundo que desenha a imagem
+class BackgroundPanel extends JPanel {
+    private final Image image;
+    public BackgroundPanel(Image backgroundImage) {
+        this.image = backgroundImage;
+    }
+    @Override
+    protected void paintComponent(Graphics g) {
+        super.paintComponent(g);
+        if (image != null) {
+            g.drawImage(image, 0, 0, getWidth(), getHeight(), this);
+        }
+    }
+}
+
+// Tela de entrada (Bem-vindo)
+public class ProjetoPI extends JFrame {
+    public static Cursor customCursor;
+
+    public ProjetoPI() {
+        setTitle("Bem-vindo!");
+        setDefaultCloseOperation(EXIT_ON_CLOSE);
+        setSize(1800, 735);
+        setLocationRelativeTo(null);
+        setResizable(false);
+        setCursor(customCursor);
+        initComponents();
+    }
+
+    private void initComponents() {
+        Image backgroundImage = UIUtils.loadImage("imagens/imagenspi/imagem de entrada.jpg");
+        BackgroundPanel panel = new BackgroundPanel(backgroundImage);
+        panel.setLayout(null);
+        // Botão invisível para iniciar
+        JButton iniciarButton = UIUtils.createInvisibleButton(
+            new Rectangle(400, 445, 570, 70),
+            e -> abrirTelaLogin()
+        );
+        panel.add(iniciarButton);
+        add(panel);
+    }
+
     private void abrirTelaLogin() {
-        dispose(); // Fecha a janela atual
-        TelaLogin login = new TelaLogin(); // Cria tela de login
-        login.setVisible(true); // Exibe tela de login
+        dispose();
+        new TelaLogin().setVisible(true);
     }
 
-    // Método principal (main)
     public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> { // Garante execução na thread da interface gráfica
+        SwingUtilities.invokeLater(() -> {
             try {
-                // Tenta carregar cursor personalizado
-                String cursorPath = "c:/Users/HP/Downloads/icon_mão-removebg-preview.png";
+                String cursorPath = "imagens/imagenspi/icon_mão-removebg-preview.png";
                 Image cursorImage = ImageIO.read(new File(cursorPath));
                 customCursor = Toolkit.getDefaultToolkit().createCustomCursor(
                         cursorImage, new Point(0, 0), "CursorPersonalizado");
             } catch (Exception e) {
-                // Se não conseguir, usa cursor padrão
-                System.err.println("Erro ao definir cursor personalizado: " + e.getMessage());
                 customCursor = Cursor.getDefaultCursor();
             }
-
-            ProjetoPI projectPi = new ProjetoPI(); // Cria janela principal
-            projectPi.setVisible(true); // Exibe janela principal
+            new ProjetoPI().setVisible(true);
         });
     }
 }
 
-// Classe da tela intermediária, exibida após login
-class TelaIntermediaria extends JFrame {
-    private JButton btnOpcao1, btnOpcao2; // Dois botões de opções
-
-    public TelaIntermediaria() {
-        setTitle("Menu Intermediário"); // Título da janela
-        setDefaultCloseOperation(EXIT_ON_CLOSE); // Fecha ao sair
-        setSize(1800, 730); // Tamanho da janela
-        setLocationRelativeTo(null); // Centraliza
-        setResizable(false); // Não redimensionável
-        setCursor(ProjetoPI.customCursor); // Usa cursor personalizado
-
-        String imagePath = "imagens/imagenspi/tela de opções.jpg"; // Caminho da imagem de fundo
-        File imageFile = new File(imagePath);
-        ImageIcon backgroundIcon = imageFile.exists() ? new ImageIcon(imagePath) : null;
-        Image backgroundImage = (backgroundIcon != null) ? backgroundIcon.getImage() : null;
-
-        BackgroundPanel panel = new BackgroundPanel(backgroundImage); // Painel de fundo
-        panel.setLayout(null); // Layout absoluto
-
-        // Botão Opção 1 (modifique os valores de setBounds para alterar posição/tamanho)
-        btnOpcao1 = new JButton("");
-        btnOpcao1.setBounds(377, 341, 618, 78); // x, y, width, height
-        btnOpcao1.setOpaque(false);
-        btnOpcao1.setContentAreaFilled(false);
-        btnOpcao1.setBorderPainted(false);
-        btnOpcao1.setBackground(new Color(0, 0, 0, 100)); // Semi-transparente
-        btnOpcao1.setForeground(Color.WHITE);
-        btnOpcao1.setFont(new Font("Trebuchet MS", Font.BOLD, 16));
-        btnOpcao1.addActionListener(e -> abrirPainelPrincipal());
-        panel.add(btnOpcao1);
-
-        // Botão Opção 2 (modifique os valores de setBounds para alterar posição/tamanho)
-        btnOpcao2 = new JButton("");
-        btnOpcao2.setBounds(377, 440, 618, 78); // x, y, width, height
-        btnOpcao2.setOpaque(false);
-        btnOpcao2.setContentAreaFilled(false);
-        btnOpcao2.setBorderPainted(false);
-        btnOpcao2.setBackground(new Color(0, 0, 0, 100)); // Semi-transparente
-        btnOpcao2.setForeground(Color.WHITE);
-        btnOpcao2.setFont(new Font("Trebuchet MS", Font.BOLD, 16));
-        btnOpcao2.addActionListener(e -> abrirPainelPrincipal());
-        panel.add(btnOpcao2);
-
-        add(panel); // Adiciona painel à janela
-    }
-
-    private void abrirPainelPrincipal() {
-        dispose(); // Fecha janela atual
-        TelaPrincipal telaPrincipal = new TelaPrincipal(); // Cria tela principal
-        telaPrincipal.setVisible(true); // Exibe tela principal
-    }
-}
-
-// Classe da tela de login
+// Tela de cadastro/login
 class TelaLogin extends JFrame {
-    private JTextField nomeUsuarioField; // Campo nome do usuário
-    private JTextField nomeAdministradorField; // Campo email admin
-    private JPasswordField passwordField; // Campo senha
-    private JButton entrarButton; // Botão Entrar
+    private JTextField nomeUsuarioField;
+    private JTextField nomeAdministradorField;
+    private JPasswordField passwordField;
 
     public TelaLogin() {
-        initUI(); // Inicializa interface
+        setTitle("Metrô day - Cadastro");
+        setDefaultCloseOperation(EXIT_ON_CLOSE);
+        setSize(1800, 730);
+        setLocationRelativeTo(null);
+        setResizable(false);
+        setCursor(ProjetoPI.customCursor);
+        initComponents();
     }
 
-    // Inicializa interface
-    private void initUI() {
-        setTitle("Metrô day - Login"); // Título
-        setDefaultCloseOperation(EXIT_ON_CLOSE); // Fecha ao sair
-        setSize(1800, 730); // Tamanho
-        setLocationRelativeTo(null); // Centraliza
-        setResizable(false); // Não redimensionável
-        setCursor(ProjetoPI.customCursor); // Cursor personalizado
+    private void initComponents() {
+        Image backgroundImage = UIUtils.loadImage("imagens/imagenspi/imagem cadastro.jpg");
+        BackgroundPanel mainPanel = new BackgroundPanel(backgroundImage);
+        mainPanel.setLayout(null);
 
-        // Configurações visuais do JOptionPane
-        UIManager.put("OptionPane.minimumSize", new Dimension(300, 100));
-        UIManager.put("OptionPane.border", BorderFactory.createEmptyBorder(5, 5, 5, 5));
-        UIManager.put("OptionPane.messageForeground", Color.WHITE);
-        UIManager.put("Panel.background", Color.DARK_GRAY);
-
-        String imagePath = "imagens/imagenspi/imagem cadastro.jpg"; // Imagem de fundo
-        File imageFile = new File(imagePath);
-        ImageIcon backgroundIcon = imageFile.exists() ? new ImageIcon(imagePath) : null;
-        Image backgroundImage = (backgroundIcon != null) ? backgroundIcon.getImage() : null;
-
-        BackgroundPanel mainPanel = new BackgroundPanel(backgroundImage); // Painel de fundo
-        mainPanel.setLayout(null); // Layout absoluto para posicionamento livre
-        mainPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20)); // Margem
-
-        // Campo nome do usuário (mude os valores de setBounds para alterar posição/tamanho)
         JLabel nomeUsuarioLabel = new JLabel("Nome do Usuário:");
-        nomeUsuarioLabel.setFont(new Font("Trebuchet MS", Font.PLAIN, 16));
-        nomeUsuarioLabel.setBounds(400, 270, 200, 30); // x, y, width, height
+        nomeUsuarioLabel.setFont(new Font("Trebuchet MS", Font.PLAIN, 20));
+        nomeUsuarioLabel.setBounds(400, 270, 200, 30);
         mainPanel.add(nomeUsuarioLabel);
 
-        // Campo email admin (mude os valores de setBounds para alterar posição/tamanho)
-        JLabel nomeLabel = new JLabel("Email de Administrador:");
-        nomeLabel.setFont(new Font("Trebuchet MS", Font.PLAIN, 16));
-        nomeLabel.setBounds(400, 350, 220, 30); // x, y, width, height (ajustado para ficar acima do campo)
-        mainPanel.add(nomeLabel);
-
-        // Campo senha (mude os valores de setBounds para alterar posição/tamanho)
-        JLabel senhaLabel = new JLabel("Senha:");
-        senhaLabel.setFont(new Font("Trebuchet MS", Font.PLAIN, 16));
-        senhaLabel.setBounds(395, 420, 590, 65); // x, y, width, height
-        mainPanel.add(senhaLabel);
-
-        // Adicione os campos de texto após os botões para ficarem "na frente"
         nomeUsuarioField = new JTextField(20);
         nomeUsuarioField.setFont(new Font("Trebuchet MS", Font.PLAIN, 16));
-        nomeUsuarioField.setBounds(390, 250, 590, 65); // x, y, width, height
+        nomeUsuarioField.setBounds(400, 260, 590, 40);
         nomeUsuarioField.setOpaque(false);
-        nomeUsuarioField.setBackground(new Color(0,0,0,0));
         nomeUsuarioField.setBorder(BorderFactory.createEmptyBorder());
-        nomeUsuarioField.setForeground(Color.BLACK); // Texto visível
+        nomeUsuarioField.setForeground(Color.BLACK);
         nomeUsuarioField.setCaretColor(Color.BLACK);
-        nomeUsuarioField.setVisible(true);
-        nomeUsuarioField.setEnabled(true);
-        nomeUsuarioField.setEditable(true);
         mainPanel.add(nomeUsuarioField);
+        // Esconde o label quando o campo não está vazio
+        nomeUsuarioField.getDocument().addDocumentListener(new javax.swing.event.DocumentListener() {
+            public void insertUpdate(javax.swing.event.DocumentEvent e) { update(); }
+            public void removeUpdate(javax.swing.event.DocumentEvent e) { update(); }
+            public void changedUpdate(javax.swing.event.DocumentEvent e) { update(); }
+            private void update() {
+                nomeUsuarioLabel.setVisible(nomeUsuarioField.getText().isEmpty());
+            }
+        });
+
+        JLabel nomeLabel = new JLabel("Email de Administrador:");
+        nomeLabel.setFont(new Font("Trebuchet MS", Font.PLAIN, 20));
+        nomeLabel.setBounds(400, 360, 220, 30);
+        mainPanel.add(nomeLabel);
 
         nomeAdministradorField = new JTextField(20);
         nomeAdministradorField.setFont(new Font("Trebuchet MS", Font.PLAIN, 15));
-        nomeAdministradorField.setBounds(395, 340, 590, 65); // x, y, width, height
+        nomeAdministradorField.setBounds(400, 350, 590, 40);
         nomeAdministradorField.setOpaque(false);
-        nomeAdministradorField.setBackground(new Color(0,0,0,0));
         nomeAdministradorField.setBorder(BorderFactory.createEmptyBorder());
-        nomeAdministradorField.setForeground(Color.BLACK); // Texto visível
+        nomeAdministradorField.setForeground(Color.BLACK);
         nomeAdministradorField.setCaretColor(Color.BLACK);
-        nomeAdministradorField.setVisible(true);
-        nomeAdministradorField.setEnabled(true);
-        nomeAdministradorField.setEditable(true);
         mainPanel.add(nomeAdministradorField);
+        // Esconde o label quando o campo não está vazio
+        nomeAdministradorField.getDocument().addDocumentListener(new javax.swing.event.DocumentListener() {
+            public void insertUpdate(javax.swing.event.DocumentEvent e) { update(); }
+            public void removeUpdate(javax.swing.event.DocumentEvent e) { update(); }
+            public void changedUpdate(javax.swing.event.DocumentEvent e) { update(); }
+            private void update() {
+                nomeLabel.setVisible(nomeAdministradorField.getText().isEmpty());
+            }
+        });
+
+        JLabel senhaLabel = new JLabel("Senha:");
+        senhaLabel.setFont(new Font("Trebuchet MS", Font.PLAIN, 20));
+        senhaLabel.setBounds(400, 445, 100, 30);
+        mainPanel.add(senhaLabel);
 
         passwordField = new JPasswordField(20);
         passwordField.setFont(new Font("Trebuchet MS", Font.PLAIN, 20));
-        passwordField.setBounds(395, 420, 590, 65); // x, y, width, height
+        passwordField.setBounds(400, 440, 590, 40);
         passwordField.setOpaque(false);
-        passwordField.setBackground(new Color(0,0,0,0));
         passwordField.setBorder(BorderFactory.createEmptyBorder());
-        passwordField.setForeground(Color.BLACK); // Texto visível
+        passwordField.setForeground(Color.BLACK);
         passwordField.setCaretColor(Color.BLACK);
-        passwordField.setVisible(true);
-        passwordField.setEnabled(true);
-        passwordField.setEditable(true);
         mainPanel.add(passwordField);
+        // Esconde o label quando o campo não está vazio
+        passwordField.getDocument().addDocumentListener(new javax.swing.event.DocumentListener() {
+            public void insertUpdate(javax.swing.event.DocumentEvent e) { update(); }
+            public void removeUpdate(javax.swing.event.DocumentEvent e) { update(); }
+            public void changedUpdate(javax.swing.event.DocumentEvent e) { update(); }
+            private void update() {
+                senhaLabel.setVisible(passwordField.getPassword().length == 0);
+            }
+        });
 
-        // Agora adicione o label 'Email de Administrador' e o botão Entrar por último para ficarem "na frente"
-        mainPanel.add(nomeLabel);
-
-        entrarButton = new JButton("Entrar");
-        entrarButton.setFont(new Font("Trebuchet MS", Font.BOLD, 14));
-        entrarButton.setBackground(Color.BLUE);
-        entrarButton.setForeground(Color.WHITE);
-        entrarButton.addActionListener(this::entrarAction); // Ação de login
-        // Altere os valores abaixo para mudar posição e tamanho do botão Entrar
-        entrarButton.setBounds(480, 520, 400, 80); // x, y, width, height
-        // Torna o botão invisível mas funcional
-        entrarButton.setOpaque(false);
-        entrarButton.setContentAreaFilled(false);
-        entrarButton.setBorderPainted(false);
-        entrarButton.setText("");
-        entrarButton.setEnabled(true);
-        entrarButton.setVisible(true);
+        // Botão invisível para entrar
+        JButton entrarButton = UIUtils.createInvisibleButton(
+            new Rectangle(480, 580, 400, 50),
+            this::entrarAction
+        );
         mainPanel.add(entrarButton);
-
-        add(mainPanel); // Adiciona painel à janela
+        add(mainPanel);
     }
 
-    // Ação do botão Entrar
     private void entrarAction(ActionEvent evt) {
         String nomeUsuario = nomeUsuarioField.getText();
-        String emailAdmin = nomeAdministradorField.getText();
         String senha = new String(passwordField.getPassword());
         if ("admin".equals(senha)) {
             JOptionPane.showMessageDialog(this, "Login bem-sucedido!\nBem-vindo, " + nomeUsuario + "!", "Sucesso", JOptionPane.INFORMATION_MESSAGE);
             this.dispose();
-            TelaIntermediaria telaIntermediaria = new TelaIntermediaria();
-            telaIntermediaria.setVisible(true);
+            new TelaIntermediaria().setVisible(true);
         } else {
             JOptionPane.showMessageDialog(this, "Senha incorreta!", "Erro de Login", JOptionPane.ERROR_MESSAGE);
         }
     }
 }
 
-// Classe da tela principal do painel do metrô
+// Tela intermediária (menu de opções)
+class TelaIntermediaria extends JFrame {
+    public TelaIntermediaria() {
+        setTitle("Menu Intermediário");
+        setDefaultCloseOperation(EXIT_ON_CLOSE);
+        setSize(1800, 730);
+        setLocationRelativeTo(null);
+        setResizable(false);
+        setCursor(ProjetoPI.customCursor);
+        initComponents();
+    }
+
+    private void initComponents() {
+        Image backgroundImage = UIUtils.loadImage("imagens/imagenspi/tela de opções.jpg");
+        BackgroundPanel panel = new BackgroundPanel(backgroundImage);
+        panel.setLayout(null);
+
+        JButton btnOpcao1 = UIUtils.createInvisibleButton(
+            new Rectangle(390, 341, 595, 80),
+            e -> abrirPainelPrincipal()
+        );
+        panel.add(btnOpcao1);
+
+        JButton btnOpcao2 = UIUtils.createInvisibleButton(
+            new Rectangle(390, 442 , 595, 80),
+            e -> abrirPainelPrincipal()
+        );
+        panel.add(btnOpcao2);
+
+        add(panel);
+    }
+
+    private void abrirPainelPrincipal() {
+        dispose();
+        new TelaPrincipal().setVisible(true);
+    }
+}
+
+// Tela principal do painel do metrô
 class TelaPrincipal extends JFrame {
-    // Classe interna para configuração das áreas clicáveis
+    // Configuração das áreas clicáveis
     private static class AreaConfig {
-        Rectangle bounds; // Retângulo da área
-        String imagePath; // Caminho da imagem de zoom
-        String title; // Título da área
+        Rectangle bounds;
+        String imagePath;
+        String title;
         AreaConfig(int x, int y, int width, int height, String imagePath, String title) {
             this.bounds = new Rectangle(x, y, width, height);
             this.imagePath = imagePath;
@@ -286,38 +268,25 @@ class TelaPrincipal extends JFrame {
         }
     }
 
-    // Áreas clicáveis do painel
     private final AreaConfig[] areasConfig = {
-        new AreaConfig(90, 300, 250, 150, 
-                      "imagens/imagenspi/painel_zoom_1.jpg.jpg", 
-                      "Painel - Área 1"),
-        new AreaConfig(350, 250, 100, 100, 
-                      "imagens/imagenspi/05 - Módulo de Comunicação - tela de início.jpg", 
-                      "Painel- Área 2"),
-        new AreaConfig(500, 250, 330, 150, 
-                      "imagens/imagenspi/02 - ADU e sinaleiras.jpg", 
-                      "Painel- Area 3"),
-        new AreaConfig(950, 250, 370, 150, 
-                      "imagens/imagenspi/04 - VDU.jpg", 
-                      "Painel- Area 4")
+        new AreaConfig(90, 300, 250, 150, "imagens/imagenspi/painel_zoom_1.jpg.jpg", "Painel - Área 1"),
+        new AreaConfig(350, 250, 100, 100, "imagens/imagenspi/05 - Módulo de Comunicação - tela de início.jpg", "Painel- Área 2"),
+        new AreaConfig(500, 250, 330, 150, "imagens/imagenspi/02 - ADU e sinaleiras.jpg", "Painel- Area 3"),
+        new AreaConfig(950, 250, 370, 150, "imagens/imagenspi/04 - VDU.jpg", "Painel- Area 4")
     };
 
-    private Image backgroundImage; // Imagem de fundo
-
     public TelaPrincipal() {
-        setTitle("Painel do Metrô"); // Título
-        setDefaultCloseOperation(EXIT_ON_CLOSE); // Fecha ao sair
-        setSize(1800, 730); // Tamanho
-        setLocationRelativeTo(null); // Centraliza
-        setResizable(false); // Não redimensionável
-        setCursor(ProjetoPI.customCursor); // Cursor personalizado
+        setTitle("Painel do Metrô");
+        setDefaultCloseOperation(EXIT_ON_CLOSE);
+        setSize(1800, 730);
+        setLocationRelativeTo(null);
+        setResizable(false);
+        setCursor(ProjetoPI.customCursor);
+        initComponents();
+    }
 
-        String imagePath = "imagens/imagenspi/01 - Painel.jpg"; // Imagem de fundo
-        File imageFile = new File(imagePath);
-        ImageIcon backgroundIcon = imageFile.exists() ? new ImageIcon(imagePath) : null;
-        backgroundImage = (backgroundIcon != null) ? backgroundIcon.getImage() : null;
-
-        // Painel de fundo desenha as áreas
+    private void initComponents() {
+        Image backgroundImage = UIUtils.loadImage("imagens/imagenspi/01 - Painel.jpg");
         BackgroundPanel mainPanel = new BackgroundPanel(backgroundImage) {
             @Override
             protected void paintComponent(Graphics g) {
@@ -328,8 +297,8 @@ class TelaPrincipal extends JFrame {
                 }
             }
         };
-
-        // MouseListener para detectar cliques nas áreas
+        mainPanel.setLayout(null);
+        // Mouse listeners para áreas clicáveis
         mainPanel.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
@@ -342,8 +311,6 @@ class TelaPrincipal extends JFrame {
                 }
             }
         });
-
-        // MouseMotionListener para mudar o cursor ao passar sobre áreas
         mainPanel.addMouseMotionListener(new MouseAdapter() {
             @Override
             public void mouseMoved(MouseEvent e) {
@@ -354,40 +321,45 @@ class TelaPrincipal extends JFrame {
                         break;
                     }
                 }
-                mainPanel.setCursor(sobreArea ? 
-                    new Cursor(Cursor.HAND_CURSOR) : 
-                    ProjetoPI.customCursor);
+                mainPanel.setCursor(sobreArea ? new Cursor(Cursor.HAND_CURSOR) : ProjetoPI.customCursor);
             }
         });
-
-        add(mainPanel); // Adiciona painel à janela
+        add(mainPanel);
     }
 
     // Abre o zoom da área clicada
     private void abrirZoom(AreaConfig areaConfig) {
-        JDialog zoomDialog = new JDialog(this, areaConfig.title, true); // Diálogo modal
-        zoomDialog.setCursor(ProjetoPI.customCursor); // Cursor personalizado
-        ImageIcon zoomIcon = loadCustomImage(areaConfig.imagePath, areaConfig.title); // Carrega imagem
-        JLabel lblImagem = new JLabel(zoomIcon) {
+        JDialog zoomDialog = new JDialog(this, areaConfig.title, true);
+        zoomDialog.setCursor(ProjetoPI.customCursor);
+        ImageIcon zoomIcon = loadCustomImage(areaConfig.imagePath, areaConfig.title);
+        int imgWidth = zoomIcon.getIconWidth();
+        int imgHeight = zoomIcon.getIconHeight();
+        Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
+        int maxWidth = (int) (screenSize.width * 0.95);
+        int maxHeight = (int) (screenSize.height * 0.85);
+
+        final ImageIcon iconToShow;
+        if (imgWidth > maxWidth || imgHeight > maxHeight) {
+            double scale = Math.min((double)maxWidth / imgWidth, (double)maxHeight / imgHeight);
+            int newW = (int)(imgWidth * scale);
+            int newH = (int)(imgHeight * scale);
+            Image scaled = zoomIcon.getImage().getScaledInstance(newW, newH, Image.SCALE_SMOOTH);
+            iconToShow = new ImageIcon(scaled);
+        } else {
+            iconToShow = zoomIcon;
+        }
+
+        JLabel lblImagem = new JLabel(iconToShow) {
             @Override
             public Dimension getPreferredSize() {
-                return new Dimension(zoomIcon.getIconWidth(), zoomIcon.getIconHeight());
+                return new Dimension(iconToShow.getIconWidth(), iconToShow.getIconHeight());
             }
         };
-        JScrollPane scrollPane = new JScrollPane(lblImagem);
-        scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
-        scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
-        Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
-        int maxWidth = (int)(screenSize.width * 0.8);
-        int maxHeight = (int)(screenSize.height * 0.8);
-        int prefWidth = Math.min(zoomIcon.getIconWidth() + 20, maxWidth);
-        int prefHeight = Math.min(zoomIcon.getIconHeight() + 60, maxHeight);
-        scrollPane.setPreferredSize(new Dimension(prefWidth, prefHeight));
         JButton btnVoltar = new JButton("Voltar");
         btnVoltar.setFont(new Font("Trebuchet MS", Font.BOLD, 14));
         btnVoltar.addActionListener(e -> zoomDialog.dispose());
         JPanel panel = new JPanel(new BorderLayout());
-        panel.add(scrollPane, BorderLayout.CENTER);
+        panel.add(lblImagem, BorderLayout.CENTER);
         JPanel buttonPanel = new JPanel();
         buttonPanel.add(btnVoltar);
         panel.add(buttonPanel, BorderLayout.SOUTH);
@@ -397,20 +369,15 @@ class TelaPrincipal extends JFrame {
         zoomDialog.setVisible(true);
     }
 
-    // Carrega imagem customizada ou gera imagem de erro
+    // Carrega imagem customizada ou placeholder
     private ImageIcon loadCustomImage(String imagePath, String areaTitle) {
         try {
             File file = new File(imagePath);
             if (file.exists()) {
                 BufferedImage img = ImageIO.read(file);
                 return new ImageIcon(img);
-            } else {
-                System.err.println("Imagem não encontrada: " + imagePath);
             }
-        } catch (Exception e) {
-            System.err.println("Erro ao carregar imagem: " + e.getMessage());
-        }
-        // Gera imagem de erro se não encontrar
+        } catch (Exception ignored) {}
         BufferedImage img = new BufferedImage(800, 600, BufferedImage.TYPE_INT_RGB);
         Graphics2D g = img.createGraphics();
         g.setColor(Color.LIGHT_GRAY);
@@ -427,20 +394,5 @@ class TelaPrincipal extends JFrame {
         g.drawString("Imagem não encontrada em: " + imagePath, 100, y + 50);
         g.dispose();
         return new ImageIcon(img);
-    }
-}
-
-// Painel de fundo que desenha a imagem
-class BackgroundPanel extends JPanel {
-    private final Image image; // Imagem de fundo
-    public BackgroundPanel(Image backgroundImage) {
-        this.image = backgroundImage;
-    }
-    @Override
-    protected void paintComponent(Graphics g) {
-        super.paintComponent(g);
-        if (image != null) {
-            g.drawImage(image, 0, 0, getWidth(), getHeight(), this);
-        }
     }
 }
